@@ -45,6 +45,8 @@ Dependencies:
 
 * [pymavlink](https://github.com/ArduPilot/pymavlink) `>=2.4.41`
 * [pyserial](https://pypi.org/project/pyserial/) `>=3.5`
+
+For installation:
 * [build](https://pypi.org/project/build/) `==1.3.0`
 * [setuptools](https://pypi.org/project/setuptools/) `==80.9.0`
 * [wheel](https://pypi.org/project/wheel/) `==0.45.1`
@@ -287,4 +289,5 @@ Open an [issue](https://github.com/Shahriar88/pixhawkcontroller/issues) if you s
 
 GPL-3.0-or-later © 2025 Md Shahriar Forhad  
 See [LICENSE](LICENSE) for details.
+
 
