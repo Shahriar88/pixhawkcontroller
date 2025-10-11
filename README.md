@@ -1,293 +1,537 @@
 # pixhawkcontroller
 
-> Lightweight Python utilities to connect and control **Pixhawk / ArduPilot** flight controllers using [pymavlink](https://github.com/ArduPilot/pymavlink).
-
-[![Build](https://github.com/Shahriar88/pixhawkcontroller/actions/workflows/python-package.yml/badge.svg)](https://github.com/Shahriar88/pixhawkcontroller/actions)
-[![PyPI](https://img.shields.io/pypi/v/pixhawkcontroller.svg)](https://pypi.org/project/pixhawkcontroller/)
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/pypi/pyversions/pixhawkcontroller.svg)](https://www.python.org/)
+> Lightweight Python utilities to connect and control **Pixhawk / ArduPilot** flight controllers using [pymavlink](https://github.com/ArduPilot/pymavlink).  
+> Supports Serial/UDP/TCP, quick telemetry, mission helpers, servo/relay/motor tests, tones, and common MAV_CMD wrappers.
 
 ---
 
 ## ✨ Features
 
-- 🔌 **Auto-detect Pixhawk** on serial ports (Windows, Linux, macOS).
-- 🌐 **Supports Serial, UDP, and TCP connections**:
-  - `COMx` (Windows), `/dev/ttyUSBx` (Linux), `/dev/tty.usbmodem*` (macOS)
-  - `udp:127.0.0.1:14550` for SITL
-  - `tcp:192.168.1.100:5760` for network connections
-- 🛠 **Servo control**: Set or repeat PWM outputs.
-- 🎛 **RC channel override** with safety reset.
-- 🎶 **Play tones** via the flight controller buzzer (e.g., Twinkle Twinkle, Mario tune).
-- 📡 **Telemetry snapshot** (mode, GPS fix, battery, armed flag, location).
-- 🛡 **Vehicle info decoding** (autopilot type, version, board, vendor/product IDs).
-- 🚁 **Flight mode switching** (ArduCopter, ArduPlane, Rover supported).
+* 🔌 **Auto-detect Pixhawk/Cube over USB** by VID/PID (configurable defaults).  
+* 🌐 **Serial / UDP / TCP** connection strings (`COMx`, `/dev/ttyUSB*`, `udp:127.0.0.1:14550`, `tcp:…`).  
+* 🛰 **INFO decode** from `AUTOPILOT_VERSION` + boot banners (vendor/product, FW/OS git hashes, capabilities).  
+* 🧭 **Mode control** with family auto-selection (Copter/Plane/Rover).  
+* 🛠 **Servo + RC override** helpers with safe reset.  
+* 🔁 **Relay repeat** & **motor test** wrappers.  
+* 🗺 **Mission helpers**: start, pause/continue, guided reposition, guided limits, condition delay.  
+* 🛫/🛬 **NAV takeoff / land / RTL** shortcuts.  
+* 🛑 **Flight termination** (emergency stop — dangerous).  
+* 🎶 **Buzzer tones** with QBasic-style strings & optional auto tones.  
 
 ---
 
 ## 📦 Installation
 
 ```bash
-# Recommended: create a fresh virtual environment
+# (Optional) virtual environment
 python3 -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# Install from PyPI (when released)
-pip install pixhawkcontroller
-
-# OR install from source
+# From source (editable)
 git clone https://github.com/Shahriar88/pixhawkcontroller.git
 cd pixhawkcontroller
 pip install -e .
+````
+
+Core dependencies:
+
+```bash
+pymavlink >= 2.4.41
+pyserial >= 3.5
 ```
 
-Dependencies:
+Build/packaging dependencies:
 
-* [pymavlink](https://github.com/ArduPilot/pymavlink) `>=2.4.41`
-* [pyserial](https://pypi.org/project/pyserial/) `>=3.5`
+```bash
+build == 1.3.0
+setuptools == 80.9.0
+wheel == 0.45.1
+twine == 6.2.0
+packaging == 25.0
+```
 
-For installation:
-* [build](https://pypi.org/project/build/) `==1.3.0`
-* [setuptools](https://pypi.org/project/setuptools/) `==80.9.0`
-* [wheel](https://pypi.org/project/wheel/) `==0.45.1`
-* [twine](https://pypi.org/project/twine/) `==6.2.0`
-* [packaging](https://pypi.org/project/packaging/) `==25.0`
+---
+
+## 🧩 Project layout
+
+* `pixhawkcontroller/main.py` — main implementation (class, helpers, demos).
+* `pixhawkcontroller/__init__.py` — public API (exports classes and `find_usb_vid_pid`).
+* `README.md` — this documentation.
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Import and connect
+### 1) List available USB serial devices
+
+Before connecting, you can quickly list all detected USB serial devices with VID/PID information:
+
+```python
+from pixhawkcontroller import find_usb_vid_pid
+
+find_usb_vid_pid()
+```
+
+Example output:
+
+```
+USB Serial Devices:
+
+{'port': 'COM5', 'vid': '2dae', 'pid': '1058', 'location': '1-1', 'description': 'CubeOrange+'}
+{'port': 'COM6', 'vid': '0483', 'pid': '5740', 'location': '2-3', 'description': 'Pixhawk 2.4.8'}
+```
+
+Use this to identify your Pixhawk/Cube device’s correct VID/PID or port before connecting.
+
+---
+
+### 2) Import & connect
 
 ```python
 from pixhawkcontroller import FlightControllerInterface, TonesQb
 
-# Auto-detect Pixhawk (USB VID/PID known)
+# Auto-detect (USB VID/PID)
 fc = FlightControllerInterface()
 fc.connect()
 
-# Or explicitly:
-# fc = FlightControllerInterface(device='udp:127.0.0.1:14550')  # Connect to SITL (simulator)
-# fc = FlightControllerInterface(device='COM3', baudrate=115200)  # Windows COM port
-# fc = FlightControllerInterface(device='/dev/ttyUSB0', baudrate=115200)  # Linux USB port
+# Or explicit serial:
+# fc = FlightControllerInterface(device='COM3', baudrate=115200)            # Windows
+# fc = FlightControllerInterface(device='/dev/ttyUSB0', baudrate=115200)    # Linux
+# fc = FlightControllerInterface(device='/dev/tty.usbmodem14101', baudrate=115200)  # macOS
+
+# Or SITL via UDP:
+# fc = FlightControllerInterface(device='udp:127.0.0.1:14550')
+# fc.connect()
+
+# Or TCP:
+# fc = FlightControllerInterface(device='tcp:192.168.1.100:5760')
+# fc.connect()
 ```
 
-### 2. Print flight controller info
+The constructor defaults include a VID/PID pair (CubePilot Orange+ by default) and will auto-scan serial ports when `device` is not provided.
+
+---
+
+### 3) Print board info & telemetry
 
 ```python
-fc.print_info()
+fc.print_info()        # vendor/product, FW/OS hashes, capabilities, IDs
+fc.print_telemetry()   # mode, family, armed, GPS fix, location, battery
 ```
 
-This prints firmware, board ID, MAVLink system ID, and more.
+These use `AUTOPILOT_VERSION` and recent messages (`HEARTBEAT`, `GPS_RAW_INT`, `GLOBAL_POSITION_INT`, `SYS_STATUS`).
 
 ---
 
-### 3. Control examples
+## 🔌 VID/PID: explicit examples
 
 ```python
-# Direct servo control:
-# - First argument: servo output number (1–16 depending on config)
-# - Second argument: PWM microseconds (typical RC range ~1000–2000 µs)
-fc.set_servo(9, 1500)
-
-# Repeat servo pulses:
-# Toggle a servo output several times with a delay between movements
-fc.repeat_servo(7, 1900, repeat_count=3, cycle_time=0.5)
-
-# RC override (use carefully!):
-# Temporarily override pilot’s RC input, e.g., throttle at mid-stick
-fc.arm()
-fc.set_rc_pwm(3, 1500)   # Channel 3 = throttle on many setups
-fc.clear_rc_overrides()
-fc.disarm()
-
-# Play a tune on the buzzer
-fc.play_tune(TonesQb.twinkle_little_star)
-
-# Print a telemetry snapshot (mode, GPS, battery, location, armed state)
-fc.print_telemetry()
-```
-
----
-
-### 4. Close connection
-
-```python
-fc.close()
-```
-
-Always close the MAVLink connection before exiting.
-
----
-
-## 🎶 Tunes
-
-This project uses **QBasic `PLAY`-style tone strings** (not RTTTL).  
-They are directly compatible with the ArduPilot buzzer and can be tested using the official [ToneTester tool](https://firmware.ardupilot.org/Tools/ToneTester/).
-
-Preloaded tunes in `TonesQb`:
-
-```python
-class TonesQb:
-    twinkle_little_star = "T200 L4CCGGAAG2FFEEDDC2"
-    def_tone = "MFT240L8 O4aO5060708dc O4aO5dc O4aO5dc L16dcdcdcdc"
-```
-
-👉 Explanation:
-- `T200` → Tempo (200 quarter notes per minute)  
-- `L4`   → Default note length (quarter notes)  
-- `CCGGAAG2` → Sequence of notes (with octaves and lengths)  
-- `MFT240`   → Music format / tempo modifier  
-- `O4`, `O5` → Set octave (O4 = 4th octave, O5 = 5th)  
-- Letters (`a`, `c`, `d`) represent notes; numbers modify duration  
-
----
-
-### Adding Your Own Tunes
-
-You can extend `TonesQb` or make your own class:
-
-```python
-class MyTunes:
-    super_mario = (
-        "T120 L8 O5 "
-        "E6E6P32E6 L4C6E6G6 P G C6 P E A B L16A# A G."
-    )
-```
-
----
-
-### Testing Tunes
-
-Copy any string into the [ToneTester](https://firmware.ardupilot.org/Tools/ToneTester/) and press play to preview it on your PC before sending it to your Pixhawk.
-
-
----
-
-## 🛡 Safety Notes
-
-⚠️ **Important: Test first in SITL or with propellers removed.**
-
-- Commands like `.arm()`, `.set_servo()`, and `.set_rc_pwm()` **can move motors/servos**.
-- Always confirm your vehicle type and wiring before sending commands.
-- To run ArduPilot in simulation:
-
-  ```bash
-  sim_vehicle.py -v ArduCopter -w --console --map
-  ```
-
----
-
-## 🧩 Project Structure
-
-```
-pixhawkcontroller/
-├── __init__.py        # Exports FlightControllerInterface, TonesQb
-├── main.py            # Core implementation
-├── __version__.py    
-setup.py
-README.md
-LICENSE
-pyproject.toml
-```
-
----
-
-## 📂 Extended Example
-
-Here’s a full demo script that shows multiple features in one go:
-
-```python
-import time
-from pixhawkcontroller import FlightControllerInterface, TonesQb
-
-fc = FlightControllerInterface()
+# ArduPilot Bootloader (USB-CDC) — same as Pixhawk 2.4.8
+# Vendor: 0x1209  Product: 0x5741
+fc = FlightControllerInterface(vid='1209', pid='5741')  # bootloader mode
 fc.connect()
 
-# Print board info
-fc.print_info()
+# Pixhawk 2.4.8 (STMicroelectronics VCP, ChibiOS)
+# Vendor: 0x0483  Product: 0x5740
+fc = FlightControllerInterface(vid='0483', pid='5740')
+fc.connect()
 
-# Switch between flight modes (varies by vehicle type)
-for mode in ["MANUAL","GUIDED", "AUTO", "RTL"]:
-    fc.set_mode(mode)
-	time.sleep(1)
-    fc.print_telemetry()
+# Cube+ family (CubePilot)
+# Vendor: 0x2DAE  Product: 0x1101 (CubeBlack+) or 0x1058 (CubeOrange+)
+fc = FlightControllerInterface(vid='2DAE', pid='1058')  # CubeOrange+
+# fc = FlightControllerInterface(vid='2DAE', pid='1101')  # CubeBlack+
+fc.connect()
+```
 
-# Servo control (PWM ranges)
-fc.set_servo(9, 900)   # low end
-time.sleep(2)
-fc.set_servo(9, 1500)  # neutral
-time.sleep(2)
-fc.set_servo(9, 1900)  # high end
+These match the VID/PID map included in the code.
 
-# RC override (channel 3 = throttle mid)
-fc.arm()
+---
+
+## 🛰 Mode control (auto family)
+
+```python
+fc.set_mode("GUIDED")
+fc.set_mode("AUTO")
+fc.set_mode("RTL")
+fc.set_mode("SMART_RTL")
+# Plane example: fc.set_mode("MANUAL") / "FBWA" / "CRUISE"
+```
+
+Vehicle family (`copter`/`plane`/`rover`) is inferred from `HEARTBEAT.type`.
+The method retries via `SET_MODE`, then falls back to `MAV_CMD_DO_SET_MODE` if needed.
+
+---
+
+## 🛠 Servo / RC override
+
+```python
+# Direct servo output (PWM µs)
+fc.set_servo(9, 900);  time.sleep(2)
+fc.set_servo(9, 1500); time.sleep(2)
+fc.set_servo(9, 1900)
+
+# RC override (ch1..8). Example: throttle mid for 2 s, then clear.
+if not fc.check_arm_status():
+    fc.arm()           # use fc.arm(force=True) to override prechecks (dangerous)
 fc.set_rc_pwm(3, 1500)
 time.sleep(2)
 fc.clear_rc_overrides()
 fc.disarm()
+```
 
-# Play buzzer tunes
+Servo uses `MAV_CMD_DO_SET_SERVO`; RC override uses `RC_CHANNELS_OVERRIDE`;
+`check_arm_status()` reads `MAV_MODE_FLAG_SAFETY_ARMED`.
+
+---
+
+## 🔁 Relay / Motor test
+
+```python
+# Toggle a relay repeatedly (index/count/period)
+fc.repeat_relay(relay_number=0, count=10, period_s=2.0)
+
+# Spin motor #1 at 20% for 3 seconds (type=0 → percent)
+fc.motor_test(motor_index=1, throttle_type=0, throttle_value=20.0, duration_s=3.0)
+```
+
+Relay uses `MAV_CMD_DO_REPEAT_RELAY`; motor test uses `MAV_CMD_DO_MOTOR_TEST`.
+
+---
+
+## 🗺 Mission helpers
+
+```python
+# Start mission (requires AUTO)
+fc.set_mode("AUTO")
+fc.mission_start()
+
+# Pause & resume mission
+fc.pause_continue_mission(True)   # pause
+time.sleep(5)
+fc.pause_continue_mission(False)  # continue
+
+# Reposition in GUIDED (lat, lon, alt), optional speed and auto-switch to GUIDED
+lat, lon, alt = 23.911222, 90.254833, 46
+fc.do_reposition(lat, lon, alt, speed_m_s=3.0, change_mode_to_guided=True)
+
+# Apply guided limits (timeout and leash)
+fc.do_guided_limits(timeout_s=60, horiz_max_m=50)
+
+# Insert condition delay (useful inside a mission)
+fc.condition_delay(5)
+```
+
+Covers `MAV_CMD_MISSION_START`, `MAV_CMD_DO_PAUSE_CONTINUE`,
+`MAV_CMD_DO_REPOSITION`, `MAV_CMD_DO_GUIDED_LIMITS`, `MAV_CMD_CONDITION_DELAY`.
+
+---
+
+## 🛫 Takeoff / 🛬 Land / 🔁 RTL / 🛑 Termination
+
+```python
+# Takeoff (Copter/Plane; Rover usually ignores)
+fc.nav_takeoff(target_alt_m=20.0, min_pitch_deg=0.0)
+
+# Land now (current location by default)
+fc.nav_land()
+
+# Return to Launch
+fc.return_to_launch()
+
+# Emergency stop (dangerous!)
+# fc.flight_termination(True)
+```
+
+Implements `MAV_CMD_NAV_TAKEOFF`, `MAV_CMD_NAV_LAND`,
+`MAV_CMD_NAV_RETURN_TO_LAUNCH`, `MAV_CMD_DO_FLIGHTTERMINATION`.
+**Use termination only in emergencies** — it cuts actuators immediately.
+
+---
+
+## 🔊 Tones & auto cues
+
+```python
+# Manual tones
+from pixhawkcontroller import TonesQb
 fc.play_tune(TonesQb.def_tone)
 time.sleep(1)
 fc.play_tune(TonesQb.twinkle_little_star)
 
-# Telemetry snapshot
+# Optional audible cues on events:
+fc.auto_play_tune = True   # or False to disable sounds
+# (connect/arm/close paths in the code play short cues if enabled)
+```
+
+Tone strings are QBasic-style and compatible with ArduPilot’s tone parser.
+
+---
+
+## 🧪 Demo blocks (safe by default)
+
+`main.py` ships with demo sections gated by flags:
+
+* `SAFE_DEMO = False` — full, commented walkthrough (flip to `True` to run).
+* A second mini-demo (SITL-friendly) under another `if False:` block.
+
+Both demonstrate connection, info/telemetry, modes, servo/RC, mission helpers, guided controls, and cleanup.
+
+---
+
+## 🧰 Utility: list USB serials (again)
+
+```python
+from pixhawkcontroller import find_usb_vid_pid
+find_usb_vid_pid()  # prints all USB serial devices with VID/PID/port/description
+```
+
+Use this to identify what VID/PID your board exposes on your OS.
+
+---
+
+## 🛡 Safety
+
+* **Test in SITL first** (no props):
+  `sim_vehicle.py -v Rover --console --map` (or Copter/Plane).
+* Commands like `.arm()`, `.set_servo()`, `.set_rc_pwm()` can move actuators.
+* **Flight termination** immediately stops actuators — only for emergencies.
+
+---
+
+## 📘 Examples
+
+### List USB serials (before connecting)
+
+```python
+from pixhawkcontroller import find_usb_vid_pid
+
+find_usb_vid_pid()
+# → prints dicts with port, vid/pid, location, description
+```
+
+### Connect (auto-detect or explicit)
+
+```python
+from pixhawkcontroller import FlightControllerInterface
+
+# Auto-detect over USB (uses default VID/PID scanning)
+fc = FlightControllerInterface()
+fc.connect()
+
+# Or explicit serial:
+# fc = FlightControllerInterface(device="COM3", baudrate=115200)            # Windows
+# fc = FlightControllerInterface(device="/dev/ttyUSB0", baudrate=115200)    # Linux
+# fc = FlightControllerInterface(device="/dev/tty.usbmodem14101", baudrate=115200)  # macOS
+# fc.connect()
+
+# Or SITL:
+# fc = FlightControllerInterface(device="udp:127.0.0.1:14550"); fc.connect()
+```
+
+### Board info & quick telemetry
+
+```python
+fc.print_info()      # Vendor/Product, FW/OS git hashes, capabilities, IDs
+fc.print_telemetry() # Mode/Family, Armed, GPS fix, Location, Battery
+```
+
+### Explicit VID/PID examples
+
+```python
+# Bootloader (USB-CDC) — same vendor/product seen on many Pixhawk bootloaders
+fc = FlightControllerInterface(vid="1209", pid="5741"); fc.connect()
+
+# Pixhawk 2.4.8 (ST VCP / ChibiOS)
+fc = FlightControllerInterface(vid="0483", pid="5740"); fc.connect()
+
+# Cube+ family (CubePilot)
+fc = FlightControllerInterface(vid="2DAE", pid="1058"); fc.connect()  # CubeOrange+
+# fc = FlightControllerInterface(vid="2DAE", pid="1101"); fc.connect()  # CubeBlack+
+```
+
+### Change modes (auto family: copter/plane/rover)
+
+```python
+fc.set_mode("GUIDED")
+fc.set_mode("AUTO")
+fc.set_mode("RTL")
+fc.set_mode("SMART_RTL")
+```
+
+### Arm / RC override (use with caution)
+
+```python
+# Arm only if not already armed
+if not fc.check_arm_status():
+    fc.arm()  # use fc.arm(force=True) to override prechecks (dangerous)
+
+# Override throttle (ch3) to 1500 µs for 2 seconds, then clear
+fc.set_rc_pwm(3, 1500)
+import time; time.sleep(2)
+fc.clear_rc_overrides()
+
+# Disarm when done
+fc.disarm()
+```
+
+### Servo control (PWM µs)
+
+```python
+import time
+fc.set_servo(9, 900);  time.sleep(1.5)
+fc.set_servo(9, 1500); time.sleep(1.5)
+fc.set_servo(9, 1900)
+```
+
+### Relay & Motor test
+
+```python
+# Toggle relay #0 → 10 cycles, 2.0 s period
+fc.repeat_relay(relay_number=0, count=10, period_s=2.0)
+
+# Run motor #1 at 20% for 3s (type=0 → percent)
+fc.motor_test(motor_index=1, throttle_type=0, throttle_value=20.0, duration_s=3.0)
+```
+
+### Mission helpers
+
+```python
+# Start current mission (set AUTO first)
+fc.set_mode("AUTO")
+fc.mission_start()
+
+# Pause / continue (in AUTO)
+fc.pause_continue_mission(True)
+time.sleep(5)
+fc.pause_continue_mission(False)
+```
+
+### Guided reposition & yaw
+
+```python
+# Move in GUIDED to a lat/lon/alt at 3 m/s and auto-switch to GUIDED
+lat, lon, alt = 23.911222, 90.254833, 46
+fc.do_reposition(lat, lon, alt, speed_m_s=3.0, change_mode_to_guided=True)
+
+# Yaw to heading 90° at 30°/s (absolute)
+fc.set_yaw_speed(90.0, 30.0, absolute=True)
+```
+
+### Guided limits & condition delay
+
+```python
+# Limit GUIDED motion (timeout=60s, horizontal leash=50m)
+fc.do_guided_limits(timeout_s=60, horiz_max_m=50)
+
+# Insert a 5s delay (useful inside AUTO missions)
+fc.condition_delay(5)
+```
+
+### Takeoff / Land / RTL / (Emergency) Termination
+
+```python
+# Takeoff to 20m (Copter/Plane; Rover usually ignores)
+fc.nav_takeoff(target_alt_m=20.0, min_pitch_deg=0.0)
+
+# Land at current location
+fc.nav_land()
+
+# Return To Launch
+fc.return_to_launch()
+
+# Emergency stop (cuts actuators immediately) — DANGEROUS
+# fc.flight_termination(True)
+```
+
+### Rover-specific: reverse direction
+
+```python
+# Reverse on, wait, then off (Rover only)
+fc.set_reverse(True)
+time.sleep(1.0)
+fc.set_reverse(False)
+```
+
+### Tones (QBasic-style) & optional auto cues
+
+```python
+from pixhawkcontroller import TonesQb
+
+# Manual tunes
+fc.play_tune(TonesQb.def_tone)
+time.sleep(1)
+fc.play_tune(TonesQb.twinkle_little_star)
+
+# Optional audible cues for events in your methods
+fc.auto_play_tune = True  # set False to silence
+```
+
+### Clean shutdown
+
+```python
+# Final snapshot then close
 fc.print_telemetry()
 
-# Clean up
+if fc.check_arm_status():
+    fc.disarm()
+
 fc.close()
 ```
 
-
-
 ---
 
-## ✅ Requirements
+## ❓ Troubleshooting
 
-- Python 3.8+ (tested on 3.9–3.12)
-- ArduPilot firmware (Copter/Plane/Rover/Sub) speaking MAVLink
-- Windows, Linux, or macOS with access to the Pixhawk serial device
-- ✅ Verified working on **Pixhawk 2.4.8** hardware
-
-
----
-
-## 🧪 Supported / Not Supported
-
-- ✅ ArduPilot-based controllers (Pixhawk family) over Serial/UDP/TCP via `pymavlink`
-- ❌ PX4 APIs (not targeted; may work for generic MAVLink pieces but not guaranteed)
-
----
-
-## 🛠 Troubleshooting
-
-**No device found / auto-detect fails**
-- On Linux, ensure your user is in the `dialout` (or equivalent) group, then re-login:
-  ```bash
-  sudo usermod -aG dialout $USER
-
+* **No device found / auto-detect fails**: run `find_usb_vid_pid()` and use explicit VID/PID.
+  On Linux, add your user to `dialout` and re-log.
+* **Mode won’t change**: ensure TX mode switch isn’t overriding; check pre-arm checks and link quality (`STATUSTEXT`).
+* **No `AUTOPILOT_VERSION`**: ensure `SERIAL0_PROTOCOL=2` and you’re connected to the MAVLink port.
 
 ---
 
 ## 📚 References
 
-* [ArduPilot MAVLink Commands](https://ardupilot.org/sub/docs/common-mavlink-mission-command-messages-mav_cmd.html)
+* [ArduPilot MAVLink Commands & Mission Items](https://ardupilot.org/dev/docs/mavlink-mission-command-messages.html)
 * [MAVLink Message Definitions](https://mavlink.io/en/messages/common.html)
-* [ToneTester Tool](https://firmware.ardupilot.org/Tools/ToneTester/)
-
----
-
-## 🤝 Contributing
-
-PRs and issues welcome!  
-Open an [issue](https://github.com/Shahriar88/pixhawkcontroller/issues) if you spot a bug or want a feature.
+* [ArduPilot ToneTester](https://ardupilot.org/dev/docs/code-overview-ardupilot.html#tonetester) (for previewing tunes)
 
 ---
 
 ## 📜 License
 
-GPL-3.0-or-later © 2025 Md Shahriar Forhad  
-See [LICENSE](LICENSE) for details.
+MIT License © 2025 Md Shahriar Forhad
+See the [LICENSE](./LICENSE) file for full terms.
+
+---
+
+## ⚠️ Disclaimer
+
+> This software is provided *as-is* for educational and experimental use only.
+> Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
