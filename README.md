@@ -90,7 +90,7 @@ Use this to identify your Pixhawk/Cube device’s correct VID/PID or port before
 ```python
 from pixhawkcontroller import FlightControllerInterface, TonesQb
 
-# Auto-detect (USB VID/PID)
+# Auto-detect (USB VID/PID) for Orange Cube+
 fc = FlightControllerInterface()
 fc.connect()
 
@@ -109,19 +109,6 @@ fc.connect()
 ```
 
 The constructor defaults include a VID/PID pair (CubePilot Orange+ by default) and will auto-scan serial ports when `device` is not provided.
-
----
-
-### 3) Print board info & telemetry
-
-```python
-fc.print_info()        # vendor/product, FW/OS hashes, capabilities, IDs
-fc.print_telemetry()   # mode, family, armed, GPS fix, location, battery
-```
-
-These use `AUTOPILOT_VERSION` and recent messages (`HEARTBEAT`, `GPS_RAW_INT`, `GLOBAL_POSITION_INT`, `SYS_STATUS`).
-
----
 
 ## 🔌 VID/PID: explicit examples
 
@@ -142,6 +129,18 @@ fc = FlightControllerInterface(vid='2DAE', pid='1058')  # CubeOrange+
 # fc = FlightControllerInterface(vid='2DAE', pid='1101')  # CubeBlack+
 fc.connect()
 ```
+---
+
+### 3) Print board info & telemetry
+
+```python
+fc.print_info()        # vendor/product, FW/OS hashes, capabilities, IDs
+fc.print_telemetry()   # mode, family, armed, GPS fix, location, battery
+```
+
+These use `AUTOPILOT_VERSION` and recent messages (`HEARTBEAT`, `GPS_RAW_INT`, `GLOBAL_POSITION_INT`, `SYS_STATUS`).
+
+---
 
 These match the VID/PID map included in the code.
 
@@ -509,6 +508,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
