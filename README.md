@@ -90,7 +90,7 @@ Use this to identify your Pixhawk/Cube device’s correct VID/PID or port before
 ```python
 from pixhawkcontroller import FlightControllerInterface, TonesQb
 
-# Auto-detect (USB VID/PID) for Orange Cube+
+# Auto-detect (USB VID/PID) for Orange Cube+   *****************
 fc = FlightControllerInterface()
 fc.connect()
 
@@ -110,7 +110,7 @@ fc.connect()
 
 The constructor defaults include a VID/PID pair (CubePilot Orange+ by default) and will auto-scan serial ports when `device` is not provided.
 
-## 🔌 VID/PID: explicit examples
+## 🔌 VID/PID: explicit examples ******************************
 
 ```python
 # ArduPilot Bootloader (USB-CDC) — same as Pixhawk 2.4.8
@@ -508,6 +508,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
