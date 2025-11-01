@@ -505,7 +505,7 @@ If you see **AHRS** or **EKF** errors in Mission Planner, follow these steps:
 
 ### Step 2 — Proper hardware setup
 
-1. Keep the GPS and Pixhawk as far apart as possible to reduce interference.
+1. Keep the **GPS and Pixhawk as far apart as possible** to reduce interference. Also make sure that the **remote module is also away from the GPS**.
 2. Mount both on your airframe so that the **arrows on Pixhawk and GPS are perfectly aligned**.
 3. Reconnect the Pixhawk to your PC and open Mission Planner.
 4. Go to **Setup → Mandatory Hardware → Accel Calibration**:
@@ -555,6 +555,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
