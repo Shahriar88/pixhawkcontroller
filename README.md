@@ -520,7 +520,7 @@ If you see **AHRS** or **EKF** errors in Mission Planner, follow these steps:
 1. Reconnect the Pixhawk via USB and open Mission Planner.
 2. Go to **Setup → Mandatory Hardware → Compass**.
 
-   * Select **only your Pixhawk compass** (uncheck others).
+   * Select **only your Pixhawk compass** (uncheck others). Sometimes GPS compass is too weak.
    * Start calibration.
 3. When done, disconnect and unplug the Pixhawk again (**don't press Reboot**).
 4. Wait 10 seconds.
@@ -555,6 +555,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
