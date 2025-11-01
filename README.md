@@ -491,7 +491,7 @@ Sure — here’s the updated section you can append at the end of your existing
 
 ---
 
-## 🧭 AHRS / EKF Error Fix Guide (EKF/AHRS troubleshooting guide”)
+## 🧭 AHRS / EKF Error Fix Guide (EKF/AHRS troubleshooting guide)
 
 If you see **AHRS** or **EKF** errors in Mission Planner, follow these steps:
 
@@ -555,6 +555,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
