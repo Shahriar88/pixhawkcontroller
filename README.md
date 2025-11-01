@@ -484,8 +484,55 @@ fc.close()
   On Linux, add your user to `dialout` and re-log.
 * **Mode won’t change**: ensure TX mode switch isn’t overriding; check pre-arm checks and link quality (`STATUSTEXT`).
 * **No `AUTOPILOT_VERSION`**: ensure `SERIAL0_PROTOCOL=2` and you’re connected to the MAVLink port.
+---
+
+
+Sure — here’s the updated section you can append at the end of your existing **README.md** under a new troubleshooting heading (formatted to match your current Markdown style):
 
 ---
+
+## 🧭 AHRS / EKF Error Fix Guide (EKF/AHRS troubleshooting guide”)
+
+If you see **AHRS** or **EKF** errors in Mission Planner, follow these steps:
+
+### Step 1 — Identify your Pixhawk compass
+
+1. Disconnect the GPS module.
+2. Connect the Pixhawk to your PC via USB.
+3. In Mission Planner → top-right corner → **Connect**.
+4. Go to **Setup → Mandatory Hardware → Compass**.
+5. Note the **DeviceID** of your Pixhawk (this is your compass ID).
+
+### Step 2 — Proper hardware setup
+
+1. Keep the GPS and Pixhawk as far apart as possible to reduce interference.
+2. Mount both on your airframe so that the **arrows on Pixhawk and GPS are perfectly aligned**.
+3. Reconnect the Pixhawk to your PC and open Mission Planner.
+4. Go to **Setup → Mandatory Hardware → Accel Calibration**:
+
+   * Run **Calibrate Accel**
+   * Run **Calibrate Level**
+   * Run **Simple Accel Cal**
+5. Disconnect and unplug the Pixhawk, then wait 10 seconds.
+
+### Step 3 — Compass calibration
+
+1. Reconnect the Pixhawk via USB and open Mission Planner.
+2. Go to **Setup → Mandatory Hardware → Compass**.
+
+   * Select **only your Pixhawk compass** (uncheck others).
+   * Start calibration.
+3. When done, disconnect and unplug the Pixhawk again.
+4. Wait 10 seconds.
+
+### Step 4 — Final check
+
+1. Reconnect the Pixhawk and open Mission Planner.
+2. Connect and verify—your **AHRS or EKF errors should now be resolved**.
+3. Repeat these steps if you later detach or relocate the GPS or Pixhawk.
+
+---
+
 
 ## 📚 References
 
@@ -508,6 +555,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
