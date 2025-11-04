@@ -33,6 +33,13 @@ cd pixhawkcontroller
 pip install -e .
 ````
 
+
+Or you can download the wheel and force install (if you have earlier version of python)
+
+```bash
+pip install pixhawkcontroller-0.0.2-py3-none-any.whl --no-deps --force-reinstall --ignore-requires-python
+```
+
 Core dependencies:
 
 ```bash
@@ -555,6 +562,7 @@ See the [LICENSE](./LICENSE) file for full terms.
 > Use it at your own risk. The author assumes no liability for any damage, injury, or loss resulting from its use.
 
 ```
+
 
 
 
